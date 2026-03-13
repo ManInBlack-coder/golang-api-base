@@ -6,14 +6,14 @@ WORKDIR /app
 # Install git and ca-certificates (needed for fetching dependencies)
 RUN apk add --no-cache git ca-certificates
 
-# Copy go mod files
-COPY go.mod go.sum ./
-
-# Download dependencies
-RUN go mod download
+# Copy go mod file
+COPY go.mod ./
 
 # Copy source code
 COPY . .
+
+# Download dependencies and generate go.sum
+RUN go mod tidy && go mod download
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
@@ -28,9 +28,6 @@ WORKDIR /root/
 
 # Copy the binary from builder
 COPY --from=builder /app/main .
-
-# Copy .env file (optional, can be overridden by docker-compose)
-COPY --from=builder /app/.env .
 
 # Expose port
 EXPOSE 3000
