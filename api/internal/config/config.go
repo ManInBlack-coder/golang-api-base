@@ -12,6 +12,12 @@ type Config struct {
 	ServerPort  string
 	APIKey      string
 	Environment string
+	DBHost      string
+	DBPort      string
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	DBSSLMode   string
 }
 
 // LoadConfig loads configuration from environment variables
@@ -25,6 +31,12 @@ func LoadConfig() *Config {
 		ServerPort:  getEnv("SERVER_PORT", "3000"),
 		APIKey:      getEnv("API_KEY", ""),
 		Environment: getEnv("ENVIRONMENT", "development"),
+		DBHost:      getEnv("DB_HOST", "localhost"),
+		DBPort:      getEnv("DB_PORT", "5432"),
+		DBUser:      getEnv("DB_USER", "postgres"),
+		DBPassword:  getEnv("DB_PASSWORD", "postgres"),
+		DBName:      getEnv("DB_NAME", "go_base_api"),
+		DBSSLMode:   getEnv("DB_SSLMODE", "disable"),
 	}
 }
 

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"golang-api/internal/models"
 	"golang-api/internal/services"
 	"golang-api/internal/utils"
@@ -22,16 +24,23 @@ func NewUserController(userService *services.UserService) *UserController {
 
 // GetAllUsers returns all users
 func (uc *UserController) GetAllUsers(c *fiber.Ctx) error {
-	users := uc.userService.GetAllUsers()
+	users, err := uc.userService.GetAllUsers()
+	if err != nil {
+		return utils.ErrorResponse(c, "Failed to retrieve users", fiber.StatusInternalServerError)
+	}
 	return utils.SuccessResponse(c, users, "Users retrieved successfully")
 }
 
 // GetUserByID returns a single user by ID
 func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
-	id := c.Params("id")
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID")
+	}
 
-	user, exists := uc.userService.GetUserByID(id)
-	if !exists {
+	user, err := uc.userService.GetUserByID(id)
+	if err != nil {
 		return utils.NotFoundResponse(c, "User not found")
 	}
 
@@ -54,14 +63,21 @@ func (uc *UserController) CreateUser(c *fiber.Ctx) error {
 	}
 
 	// Create user
-	user := uc.userService.CreateUser(req)
+	user, err := uc.userService.CreateUser(req)
+	if err != nil {
+		return utils.ErrorResponse(c, "Failed to create user", fiber.StatusInternalServerError)
+	}
 
 	return utils.CreatedResponse(c, user, "User created successfully")
 }
 
 // UpdateUser updates an existing user
 func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
-	id := c.Params("id")
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID")
+	}
 
 	var req models.UpdateUserRequest
 
@@ -71,8 +87,8 @@ func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
 	}
 
 	// Update user
-	user, exists := uc.userService.UpdateUser(id, req)
-	if !exists {
+	user, err := uc.userService.UpdateUser(id, req)
+	if err != nil {
 		return utils.NotFoundResponse(c, "User not found")
 	}
 
@@ -81,10 +97,14 @@ func (uc *UserController) UpdateUser(c *fiber.Ctx) error {
 
 // DeleteUser deletes a user by ID
 func (uc *UserController) DeleteUser(c *fiber.Ctx) error {
-	id := c.Params("id")
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return utils.BadRequestResponse(c, "Invalid user ID")
+	}
 
-	deleted := uc.userService.DeleteUser(id)
-	if !deleted {
+	err = uc.userService.DeleteUser(id)
+	if err != nil {
 		return utils.NotFoundResponse(c, "User not found")
 	}
 

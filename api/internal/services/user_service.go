@@ -1,131 +1,49 @@
 package services
 
 import (
-	"fmt"
-	"sync"
-	"time"
-
 	"golang-api/internal/models"
+	"golang-api/internal/repository"
 )
 
 // UserService handles user-related business logic
 type UserService struct {
-	users  map[string]models.User
-	mu     sync.RWMutex
-	nextID int
+	repo repository.UserRepository
 }
 
 // NewUserService creates a new UserService instance
-func NewUserService() *UserService {
-	service := &UserService{
-		users:  make(map[string]models.User),
-		nextID: 1,
-	}
-
-	// Add some sample data
-	service.seedData()
-
-	return service
-}
-
-// seedData adds initial sample users
-func (s *UserService) seedData() {
-	sampleUsers := []models.User{
-		{
-			ID:        "1",
-			Name:      "John Doe",
-			Email:     "john.doe@example.com",
-			CreatedAt: time.Now().Format(time.RFC3339),
-			UpdatedAt: time.Now().Format(time.RFC3339),
-		},
-		{
-			ID:        "2",
-			Name:      "Jane Smith",
-			Email:     "jane.smith@example.com",
-			CreatedAt: time.Now().Format(time.RFC3339),
-			UpdatedAt: time.Now().Format(time.RFC3339),
-		},
-	}
-
-	for _, user := range sampleUsers {
-		s.users[user.ID] = user
-	}
-	s.nextID = 3
+func NewUserService(repo repository.UserRepository) *UserService {
+	return &UserService{repo: repo}
 }
 
 // GetAllUsers returns all users
-func (s *UserService) GetAllUsers() []models.User {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	users := make([]models.User, 0, len(s.users))
-	for _, user := range s.users {
-		users = append(users, user)
-	}
-	return users
+func (s *UserService) GetAllUsers() ([]models.User, error) {
+	return s.repo.GetAll()
 }
 
 // GetUserByID returns a user by ID
-func (s *UserService) GetUserByID(id string) (models.User, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	user, exists := s.users[id]
-	return user, exists
+func (s *UserService) GetUserByID(id int) (models.User, error) {
+	return s.repo.GetByID(id)
 }
 
 // CreateUser creates a new user
-func (s *UserService) CreateUser(req models.CreateUserRequest) models.User {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now().Format(time.RFC3339)
+func (s *UserService) CreateUser(req models.CreateUserRequest) (models.User, error) {
 	user := models.User{
-		ID:        fmt.Sprintf("%d", s.nextID),
-		Name:      req.Name,
-		Email:     req.Email,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Name:  req.Name,
+		Email: req.Email,
 	}
-
-	s.users[user.ID] = user
-	s.nextID++
-
-	return user
+	return s.repo.Create(user)
 }
 
 // UpdateUser updates an existing user
-func (s *UserService) UpdateUser(id string, req models.UpdateUserRequest) (models.User, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	user, exists := s.users[id]
-	if !exists {
-		return models.User{}, false
+func (s *UserService) UpdateUser(id int, req models.UpdateUserRequest) (models.User, error) {
+	user := models.User{
+		Name:  req.Name,
+		Email: req.Email,
 	}
-
-	if req.Name != "" {
-		user.Name = req.Name
-	}
-	if req.Email != "" {
-		user.Email = req.Email
-	}
-	user.UpdatedAt = time.Now().Format(time.RFC3339)
-
-	s.users[id] = user
-	return user, true
+	return s.repo.Update(id, user)
 }
 
 // DeleteUser deletes a user by ID
-func (s *UserService) DeleteUser(id string) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	_, exists := s.users[id]
-	if !exists {
-		return false
-	}
-
-	delete(s.users, id)
-	return true
+func (s *UserService) DeleteUser(id int) error {
+	return s.repo.Delete(id)
 }
