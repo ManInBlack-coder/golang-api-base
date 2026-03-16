@@ -6,7 +6,9 @@ import (
 
 	"golang-api/internal/config"
 	"golang-api/internal/controllers"
+	"golang-api/internal/database"
 	"golang-api/internal/middleware"
+	"golang-api/internal/repository"
 	"golang-api/internal/routes"
 	"golang-api/internal/services"
 
@@ -24,6 +26,13 @@ func main() {
 	if cfg.APIKey == "" {
 		log.Fatal("API_KEY environment variable is required")
 	}
+
+	// Connect to database
+	db, err := database.Connect(cfg)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -44,8 +53,11 @@ func main() {
 	// API Key authentication middleware
 	app.Use(middleware.APIKeyAuth(cfg.APIKey))
 
+	// Initialize repository
+	userRepo := repository.NewPostgresUserRepository(db)
+
 	// Initialize services
-	userService := services.NewUserService()
+	userService := services.NewUserService(userRepo)
 
 	// Initialize controllers
 	healthController := controllers.NewHealthController()
