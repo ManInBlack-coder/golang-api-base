@@ -29,12 +29,12 @@ func (r *PostgresUserRepository) GetAll() ([]models.User, error) {
 		From("users").
 		OrderBy("id")
 
-	sql, args, err := query.ToSql()
+	queryStr, args, err := query.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	rows, err := r.db.Query(sql, args...)
+	rows, err := r.db.Query(queryStr, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -58,13 +58,13 @@ func (r *PostgresUserRepository) GetByID(id int) (models.User, error) {
 		From("users").
 		Where(squirrel.Eq{"id": id})
 
-	sql, args, err := query.ToSql()
+	queryStr, args, err := query.ToSql()
 	if err != nil {
 		return models.User{}, fmt.Errorf("failed to build query: %w", err)
 	}
 
 	var user models.User
-	err = r.db.QueryRow(sql, args...).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+	err = r.db.QueryRow(queryStr, args...).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return models.User{}, fmt.Errorf("user not found")
@@ -83,12 +83,12 @@ func (r *PostgresUserRepository) Create(user models.User) (models.User, error) {
 		Values(user.Name, user.Email, now, now).
 		Suffix("RETURNING id, created_at, updated_at")
 
-	sql, args, err := query.ToSql()
+	queryStr, args, err := query.ToSql()
 	if err != nil {
 		return models.User{}, fmt.Errorf("failed to build query: %w", err)
 	}
 
-	err = r.db.QueryRow(sql, args...).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+	err = r.db.QueryRow(queryStr, args...).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return models.User{}, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -111,13 +111,13 @@ func (r *PostgresUserRepository) Update(id int, user models.User) (models.User, 
 
 	query = query.Suffix("RETURNING id, name, email, created_at, updated_at")
 
-	sql, args, err := query.ToSql()
+	queryStr, args, err := query.ToSql()
 	if err != nil {
 		return models.User{}, fmt.Errorf("failed to build query: %w", err)
 	}
 
 	var updatedUser models.User
-	err = r.db.QueryRow(sql, args...).Scan(&updatedUser.ID, &updatedUser.Name, &updatedUser.Email, &updatedUser.CreatedAt, &updatedUser.UpdatedAt)
+	err = r.db.QueryRow(queryStr, args...).Scan(&updatedUser.ID, &updatedUser.Name, &updatedUser.Email, &updatedUser.CreatedAt, &updatedUser.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return models.User{}, fmt.Errorf("user not found")

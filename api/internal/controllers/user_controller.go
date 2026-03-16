@@ -26,7 +26,7 @@ func NewUserController(userService *services.UserService) *UserController {
 func (uc *UserController) GetAllUsers(c *fiber.Ctx) error {
 	users, err := uc.userService.GetAllUsers()
 	if err != nil {
-		return utils.ErrorResponse(c, "Failed to retrieve users", fiber.StatusInternalServerError)
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve users")
 	}
 	return utils.SuccessResponse(c, users, "Users retrieved successfully")
 }
@@ -65,7 +65,7 @@ func (uc *UserController) CreateUser(c *fiber.Ctx) error {
 	// Create user
 	user, err := uc.userService.CreateUser(req)
 	if err != nil {
-		return utils.ErrorResponse(c, "Failed to create user", fiber.StatusInternalServerError)
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to create user")
 	}
 
 	return utils.CreatedResponse(c, user, "User created successfully")
